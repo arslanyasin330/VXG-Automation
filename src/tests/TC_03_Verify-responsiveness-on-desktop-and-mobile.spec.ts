@@ -9,82 +9,77 @@ test.describe("Responsive Website Testing", () => {
     let loginPage: LoginPage;
     let homePage: HomePage;
     let sidebarHeading: string[];
-    const desktopViewport = { width: 1920, height: 1080 };
 
-    test("Verify desktop responsiveness of the application", { tag: ["@smoke"] }, async ({ page }) => {
-        await page.setViewportSize(desktopViewport);
-        loginPage = new LoginPage(page);
-        await loginPage.visit(process.env.BASE_URL);
+    const scenarios = [
+        {
+            name: "Desktop",
+            viewport: { width: 1920, height: 1080 },
+            context: null,
+        },
+        {
+            name: "Mobile",
+            viewport: devices["iPhone 12"].viewport,
+            userAgent: devices["iPhone 12"].userAgent,
+            context: "mobile",
+        },
+    ];
 
-        await expect(page).toHaveTitle(loginTestData.landingPageTitle);
-        await expect(page).toHaveURL(loginTestData.signInUrl);
-        await expect(await loginPage.getLogo()).toBeVisible();
-        await expect(await loginPage.getHeading()).toContainText(loginTestData.title);
-        await expect(await loginPage.getEmailLabel()).toContainText(loginTestData.emailLabel);
-        await expect(await loginPage.getPasswordLabel()).toContainText(loginTestData.passwordLabel);
+    for (const scenario of scenarios) {
+        test(`Verify ${scenario.name} responsiveness of the application`, { tag: ["@smoke"] }, async ({ page, browser }) => {
+            if (scenario.context === "mobile") {
+                const mobileContext = await browser.newContext({
+                    viewport: scenario.viewport,
+                    userAgent: scenario.userAgent,
+                });
+                page = await mobileContext.newPage();
+            } else {
+                await page.setViewportSize(scenario.viewport as { width: number; height: number });
+            }
 
-        await loginPage.enterEmail(process.env.SYSTEM_USERNAME);
-        await loginPage.enterPassword(process.env.SYSTEM_PASSWORD);
-        await loginPage.signIn();
+            // Initialize login page and visit base URL
+            loginPage = new LoginPage(page);
+            await loginPage.visit(process.env.BASE_URL);
 
-        homePage = new HomePage(page);
-        sidebarHeading = await homePage.getSidebarHeadings();
-        const homePageUrl: string = page.url();
-        expect(homePageUrl).toBe(homeTestData.homePageUrl);
-        await Promise.all([
-            expect(sidebarHeading).toContain(homeTestData.dashboard),
-            expect(sidebarHeading).toContain(homeTestData.monitoring),
-            expect(sidebarHeading).toContain(homeTestData.alerts),
-            expect(sidebarHeading).toContain(homeTestData.archive),
-            expect(sidebarHeading).toContain(homeTestData.search),
-            expect(sidebarHeading).toContain(homeTestData.setting),
-            expect(sidebarHeading).toContain(homeTestData.settings.alert),
-            expect(sidebarHeading).toContain(homeTestData.settings.alerts.rules),
-            expect(sidebarHeading).toContain(homeTestData.settings.alerts.faces),
-            expect(sidebarHeading).toContain(homeTestData.settings.users),
-            expect(sidebarHeading).toContain(homeTestData.settings.cameras),
-            expect(sidebarHeading).toContain(homeTestData.settings.sites),
-        ]);
-        await page.close();
-    });
+            // Assertions for login page
+            await expect(page).toHaveTitle(loginTestData.landingPageTitle);
+            await expect(page).toHaveURL(loginTestData.signInUrl);
+            await expect(await loginPage.getLogo()).toBeVisible();
+            await expect(await loginPage.getHeading()).toContainText(loginTestData.title);
+            await expect(await loginPage.getEmailLabel()).toContainText(loginTestData.emailLabel);
+            await expect(await loginPage.getPasswordLabel()).toContainText(loginTestData.passwordLabel);
 
-    test("Verify mobile responsiveness of the application", { tag: ["@smoke"] }, async ({ browser }) => {
-        const mobileContext = await browser.newContext({
-            ...devices["iPhone 12"],
+            // Log in and verify home page
+            await loginPage.enterEmail(process.env.SYSTEM_USERNAME);
+            await loginPage.enterPassword(process.env.SYSTEM_PASSWORD);
+            await loginPage.signIn();
+
+            homePage = new HomePage(page);
+            sidebarHeading = await homePage.getSidebarHeadings();
+            const homePageUrl: string = page.url();
+            expect(homePageUrl).toBe(homeTestData.homePageUrl);
+
+            // Validate sidebar headings
+            const expectedHeadings = [
+                homeTestData.dashboard,
+                homeTestData.monitoring,
+                homeTestData.alerts,
+                homeTestData.archive,
+                homeTestData.search,
+                homeTestData.setting,
+                homeTestData.settings.alert,
+                homeTestData.settings.alerts.rules,
+                homeTestData.settings.alerts.faces,
+                homeTestData.settings.users,
+                homeTestData.settings.cameras,
+                homeTestData.settings.sites,
+            ];
+            for (const heading of expectedHeadings) {
+                await expect(sidebarHeading).toContain(heading);
+            }
+
+            if (scenario.context === "mobile") {
+                await page.context().close();
+            }
         });
-        const mobilePage = await mobileContext.newPage();
-        loginPage = new LoginPage(mobilePage);
-        await mobilePage.goto(process.env.BASE_URL);
-
-        await expect(mobilePage).toHaveTitle(loginTestData.landingPageTitle);
-        await expect(mobilePage).toHaveURL(loginTestData.signInUrl);
-        await expect(await loginPage.getLogo()).toBeVisible();
-        await expect(await loginPage.getHeading()).toContainText(loginTestData.title);
-        await expect(await loginPage.getEmailLabel()).toContainText(loginTestData.emailLabel);
-        await expect(await loginPage.getPasswordLabel()).toContainText(loginTestData.passwordLabel);
-
-        await loginPage.enterEmail(process.env.SYSTEM_USERNAME);
-        await loginPage.enterPassword(process.env.SYSTEM_PASSWORD);
-        await loginPage.signIn();
-
-        homePage = new HomePage(mobilePage);
-        sidebarHeading = await homePage.getSidebarHeadings();
-        const homePageUrl: string = mobilePage.url();
-        expect(homePageUrl).toBe(homeTestData.homePageUrl);
-        await Promise.all([
-            expect(sidebarHeading).toContain(homeTestData.dashboard),
-            expect(sidebarHeading).toContain(homeTestData.monitoring),
-            expect(sidebarHeading).toContain(homeTestData.alerts),
-            expect(sidebarHeading).toContain(homeTestData.archive),
-            expect(sidebarHeading).toContain(homeTestData.search),
-            expect(sidebarHeading).toContain(homeTestData.setting),
-            expect(sidebarHeading).toContain(homeTestData.settings.alert),
-            expect(sidebarHeading).toContain(homeTestData.settings.alerts.rules),
-            expect(sidebarHeading).toContain(homeTestData.settings.alerts.faces),
-            expect(sidebarHeading).toContain(homeTestData.settings.users),
-            expect(sidebarHeading).toContain(homeTestData.settings.cameras),
-            expect(sidebarHeading).toContain(homeTestData.settings.sites),
-        ]);
-        await mobileContext.close();
-    });
+    }
 });
