@@ -24,4 +24,6 @@ export const alertRuleTestData = {
     cloudAI: "Cloud AI",
     alertTypeName: "Intrusion",
     natualQuery: "All employees wearing a uniform",
+    notificationScheduleStartTime: "02:30",
+    notificationScheduleEndTime: "03:30"
 };

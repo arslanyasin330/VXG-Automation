@@ -97,7 +97,7 @@ test("Validate successful addition of a new Alert Rule", { tag: ["@smoke"] }, as
         expect(newAlertLabel).toContain(alertRuleTestData.chatGPT),
         expect(newAlertLabel).toContain(alertRuleTestData.cloudAI),
     ]);
-    await newAlertRulesPopup.selectTimesAndDates();
+    await newAlertRulesPopup.selectTimesAndDates(alertRuleTestData.notificationScheduleStartTime, alertRuleTestData.notificationScheduleEndTime);
     await newAlertRulesPopup.enterRecipients(process.env.SYSTEM_USERNAME);
     await newAlertRulesPopup.selectAlertType(alertRuleTestData.alertTypeName);
     await newAlertRulesPopup.pressButton(alertRuleTestData.createAlert);

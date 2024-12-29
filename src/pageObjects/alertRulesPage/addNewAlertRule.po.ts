@@ -3,6 +3,8 @@ import { alertRuleTestData } from "../../testData/alertRuleTestData/alertRuleTes
 import { Timeout } from "../../utils/enums";
 import { expect } from "playwright/test";
 
+type Options = "first" | "second";
+
 export class AddNewAlertRulesPopup extends AlertRulesPage {
     protected readonly addNewAlertRule: string = "[class*='custom-scrollbar'] h2";
     protected readonly addNewRuleLabel: string = "label[class*='text-sm']";
@@ -14,8 +16,8 @@ export class AddNewAlertRulesPopup extends AlertRulesPage {
     private readonly addAnotherSiteButton: string = "[type='button'][class*='text-accentDark']";
     private readonly timesAndDates: string = "[class='relative'] svg";
     private readonly alertTypeButton: string = "[type='button'][role='combobox']";
-    private readonly timeFirstSelected: string = "[id='radix-:r74:']";
-    private readonly timeSecondSelected: string = "[id='radix-:rbs:']";
+    private readonly notificationSchedulePopup: string = "h2:has-text('Notification Schedule')";
+    private readonly notificationTimeList: string = "[role='presentation']";
     private readonly timeErrorMessage: string = "[class*='mt-1 p']";
     private readonly saveScheduleButton: string = "[class*='bg-black text-white']";
     private readonly recipientsTextField: string = "[name='recipients']";
@@ -46,22 +48,22 @@ export class AddNewAlertRulesPopup extends AlertRulesPage {
         await this.waitForVisible(this.cameraOptions);
         await this.page.locator(this.cameraOptions).first().click({ force: true });
     }
-    async selectTimesAndDates(): Promise<void> {
+    async selectTimesAndDates(startTime:string, endTime: string): Promise<void> {
         await this.page.locator(this.timesAndDates).click();
+        await this.waitForVisible(this.notificationSchedulePopup);
         expect(await this.getAddNewAlertRuleText()).toContain(alertRuleTestData.notificationSchedule);
         expect(await this.getAddNewRuleLabels()).toContain(alertRuleTestData.notificationType);
-        await this.selectTimeOption(2, "first");
+        await this.selectTimeOption(2, startTime);
         expect(await this.getTimeErrorMessage()).toContain(alertRuleTestData.timeErrorMessage);
         await this.waitForReadiness(Timeout.ONE_SECONDS);
-        await this.selectTimeOption(3, "second");
+        await this.selectTimeOption(3, endTime);
         await this.saveSchedule();
     }
-    async selectTimeOption(Index: number, timeOption: "first" | "second"): Promise<void> {
+    async selectTimeOption(Index: number, value: string): Promise<void> {
         const selectTime = this.page.locator(this.alertTypeButton).nth(Index);
-        await this.waitForReadiness(Timeout.ONE_SECONDS);
         await selectTime.click({ force: true });
-        const timeSelector = timeOption === "first" ? this.timeFirstSelected : this.timeSecondSelected;
-        await this.page.locator(timeSelector).click({ force: true });
+        await this.waitForVisible(this.notificationTimeList);
+        await this.page.locator(this.notificationTimeList).getByText(value).click({force: true});
     }
 
     async getTimeErrorMessage(): Promise<string> {
