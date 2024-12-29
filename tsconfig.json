@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./dist"
+    },
+    "include": ["src/**/*", "playwright.config.ts", "**/*.spec.ts", "./global.d.ts"],
+    "exclude": ["node_modules", "allure-report", "allure-results", "playwright-report", "test-results"]
+}
